@@ -11,18 +11,18 @@ services:
       - "3000:3000"
     environment:
       - NUXT_PUBLIC_DATA_BASE_URL=/api/secure-data
-      - SERVER_DATA_DIR=/app/market_data/spy_options
+      # Since we are mounting 'spy_options' directly as the root of /app/market_data,
+      # we change this variable back to the base directory!
+      - SERVER_DATA_DIR=/app/market_data
     volumes:
-      - shared-bot-data:/app/market_data
+      # BIND MOUNT: Maps the raw host path straight into the container
+      - /var/lib/docker/volumes/a40wc8k0oog8c8kowk0wgsgo_bot-data/_data/spy_options:/app/market_data
     networks:
       - coolify
 
-volumes:
-  shared-bot-data:
-    external: true
-    # Docker will look for this variable. 
-    # If it doesn't exist, it defaults to the string after the :-
-    name: a40wc8k0oog8c8kowk0wgsgo_bot-data
+# We leave the bottom volumes block ENTIRELY EMPTY now, 
+# because bind mounts do not need to be declared here!
+volumes: {}
 
 networks:
   coolify:
