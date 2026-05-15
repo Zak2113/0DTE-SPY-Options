@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  terminal-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spy-terminal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_PUBLIC_DATA_BASE_URL=/api/secure-data
+      - SERVER_DATA_DIR=/app/market_data/spy_options
+    volumes:
+      - shared-bot-data:/app/market_data
+    networks:
+      - coolify
+
+volumes:
+  shared-bot-data:
+    external: true
+    # Docker will look for this variable. 
+    # If it doesn't exist, it defaults to the string after the :-
+    name: ${COOLIFY_SHARED_VOLUME_NAME}
+
+networks:
+  coolify:
+    external: true

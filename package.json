@@ -10,7 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.33.1-dev45.0",
+    "@nuxtjs/color-mode": "^4.0.0",
     "nuxt": "^4.4.5",
+    "plotly.js-dist-min": "^3.5.1",
     "vue": "^3.5.34",
     "vue-router": "^5.0.6"
   }
