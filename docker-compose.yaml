@@ -22,7 +22,7 @@ volumes:
     external: true
     # Docker will look for this variable. 
     # If it doesn't exist, it defaults to the string after the :-
-    name: ${COOLIFY_SHARED_VOLUME_NAME}
+    name: a40wc8k0oog8c8kowk0wgsgo_bot-data
 
 networks:
   coolify:
