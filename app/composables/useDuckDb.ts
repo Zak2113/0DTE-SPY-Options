@@ -91,3 +91,5 @@ export const useDuckDb = () => {
 
   return { initDB, getContractData };
 };
+
+//test
