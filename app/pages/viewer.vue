@@ -6,34 +6,25 @@
         <NuxtLink to="/" class="back-link">← Back to Home</NuxtLink>
       </div>
       
-      <div class="control-panel">
-        <h2 class="panel-title">Data Selection</h2>
-
-        <div class="control-group">
-          <label>Trading Date</label>
-          <select v-model="selectedDate">
-            <option v-for="date in availableDates" :key="date" :value="date">
-              {{ date }}
-            </option>
-          </select>
+      <div class="control-panel flex-1 flex flex-col min-h-0">
+        
+        <div class="calendar-container mb-4">
+          <h2 class="panel-title">Trading Date</h2>
+          <MiniCalendar 
+            v-model="selectedDate" 
+            :availableDates="availableDates" 
+          />
         </div>
-
-        <div class="control-group">
-          <label>Contract Type</label>
-          <select v-model="selectedRight" @change="fetchChartData">
-            <option value="C">Call</option>
-            <option value="P">Put</option>
-          </select>
+        <br></br>
+        <div class="ruler-container flex-1 overflow-hidden mt-4">
+          <VerticalStrikeRuler 
+            v-if="selectedDate"
+            :metadata="metadata" 
+            :currentDate="selectedDate"
+            @load-contract="handleContractLoad" 
+          />
         </div>
-
-        <div class="control-group">
-          <label>Strike Price</label>
-          <select v-model="selectedStrike" @change="fetchChartData">
-            <option v-for="strike in availableStrikes" :key="strike" :value="strike">
-              ${{ strike.toFixed(2) }}
-            </option>
-          </select>
-        </div>
+        
       </div>
       
       <div class="sidebar-footer">
@@ -48,8 +39,10 @@
       
       <header class="dashboard-header">
         <div class="ticker-block">
-          <h1 class="ticker">SPY {{ selectedStrike }}{{ selectedRight }}</h1>
-          <span class="expiry">0DTE &bull; {{ formatDate(selectedDate) }}</span>
+          <h1 class="ticker">
+            {{ selectedStrike ? `SPY ${selectedStrike}${selectedRight}` : 'Select a Contract' }}
+          </h1>
+          <span class="expiry" v-if="selectedDate">0DTE &bull; {{ formatDate(selectedDate) }}</span>
         </div>
         <div class="status-block">
           <span v-if="isLoading" class="loading-text">Loading chart data...</span>
@@ -68,7 +61,7 @@
         
         <div class="empty-state" v-else>
           <div v-if="isLoading" class="spinner"></div>
-          <p v-else>Please select a contract to view historical data.</p>
+          <p v-else>Please select a contract from the sidebar to view history.</p>
         </div>
       </div>
 
@@ -108,9 +101,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useDuckDb } from '~/composables/useDuckDb';
 import OptionsChart from '~/components/OptionsChart.vue';
+import VerticalStrikeRuler from '~/components/VerticalStrikeRuler.vue'; // <-- UPDATED IMPORT
 
 const { getContractData } = useDuckDb();
 const config = useRuntimeConfig();
@@ -119,8 +113,9 @@ const isLoading = ref(false);
 const chartData = ref([]);
 const metadata = ref({});
 
+// Global selection state
 const selectedDate = ref('');
-const selectedRight = ref('C');
+const selectedRight = ref('');
 const selectedStrike = ref(null);
 
 const formatDate = (dateStr) => {
@@ -134,56 +129,36 @@ const availableDates = computed(() => {
   return Object.keys(metadata.value).sort((a, b) => new Date(b) - new Date(a));
 });
 
-const availableStrikes = computed(() => {
-  if (!metadata.value[selectedDate.value]) return [];
-  return metadata.value[selectedDate.value][selectedRight.value] || [];
-});
-
 const fetchMetadata = async () => {
   try {
     const res = await $fetch('/api/metadata');
     metadata.value = res;
     if (availableDates.value.length > 0) {
-      selectedDate.value = availableDates.value[0];
+      selectedDate.value = availableDates.value[0]; // Auto-select latest date
     }
   } catch (e) {
     console.error("Failed to fetch folder metadata", e);
   }
 };
 
-const fetchChartData = async () => {
-  if (!selectedDate.value || !selectedStrike.value) return;
+const handleContractLoad = async (payload) => {
+  selectedDate.value = payload.date;
+  selectedStrike.value = payload.strike;
+  selectedRight.value = payload.right;
   
   isLoading.value = true;
   chartData.value = [];
 
   try {
-    const fileName = `part-${selectedStrike.value}-${selectedRight.value}.parquet`;
     const baseUrl = config.public.dataBaseUrl;
-    
-    // Calls the secure streaming API: /api/secure-data/day_str=.../part-...parquet
-    const fileUrl = `${baseUrl}/day_str=${selectedDate.value}/${fileName}`;
-
-    chartData.value = await getContractData(fileUrl, fileName);
+    const fileUrl = `${baseUrl}/day_str=${payload.date}/${payload.fileName}`;
+    chartData.value = await getContractData(fileUrl, payload.fileName);
   } catch (error) {
     console.warn("Target contract not found.");
   } finally {
     isLoading.value = false;
   }
 };
-
-watch(availableStrikes, (newStrikes) => {
-  if (newStrikes.length > 0 && !newStrikes.includes(selectedStrike.value)) {
-    const midIdx = Math.floor(newStrikes.length / 2);
-    selectedStrike.value = newStrikes[midIdx];
-  }
-});
-
-watch([selectedDate, selectedRight, selectedStrike], () => {
-  if (selectedDate.value && selectedStrike.value) {
-    fetchChartData();
-  }
-});
 
 onMounted(async () => {
   await fetchMetadata();
@@ -194,7 +169,7 @@ onMounted(async () => {
 /* --- Global Workspace Layout --- */
 .workspace-layout {
   display: flex;
-  height: 100vh; /* Changed from min-height */
+  height: 100vh; 
   width: 100vw;
   overflow: hidden;
   background-color: var(--bg-main);
@@ -203,222 +178,112 @@ onMounted(async () => {
 
 /* --- Left Sidebar --- */
 .sidebar {
-  width: 320px;
+  width: 340px; /* Widened slightly to give the ladder breathing room */
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 2rem 1.5rem; /* Adjusted padding */
 }
 
-.sidebar-header {
-  margin-bottom: 2.5rem;
-}
-
-.back-link {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
+.sidebar-header { margin-bottom: 2rem; }
+.back-link { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color 0.2s; text-decoration: none;}
 .back-link:hover { color: var(--text-main); }
 
-.panel-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 1.5rem;
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevents sidebar from breaking bounds */
 }
 
-.control-group { margin-bottom: 1.5rem; }
+.panel-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.75rem;
+}
 
-.control-group label {
-  display: block;
+/* --- THE NEW DATE STRIP --- */
+.date-strip-container {
+  margin-bottom: 1rem;
+}
+
+.date-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* Hide scrollbar visually but keep functionality */
+.date-strip::-webkit-scrollbar { height: 4px; }
+.date-strip::-webkit-scrollbar-track { background: transparent; }
+.date-strip::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+.date-pill {
+  white-space: nowrap;
+  padding: 0.4rem 0.85rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-select {
-  width: 100%;
-  padding: 0.65rem 0.75rem;
-  background-color: var(--bg-main);
-  color: var(--text-main);
+  border-radius: 999px; 
   border: 1px solid var(--border-color);
-  border-radius: 6px; /* Softened edges */
-  font-size: 0.95rem;
+  background-color: var(--bg-card);
+  color: var(--text-muted);
   cursor: pointer;
-  outline: none;
   transition: all 0.2s ease;
 }
 
-select:focus, select:hover { 
-  border-color: var(--accent-color); 
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); /* Subtle focus ring */
+.date-pill:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
 }
 
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
+.date-pill-active {
+  background-color: var(--accent-color, #3b82f6); 
+  color: white;
+  border-color: var(--accent-color, #3b82f6);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.status-indicator { 
-  display: flex; 
-  align-items: center; 
-  gap: 0.5rem; 
-  color: var(--text-muted); 
-  font-size: 0.85rem; 
-  font-weight: 500;
-}
-.status-dot { 
-  width: 8px; 
-  height: 8px; 
-  background-color: #10B981; 
-  border-radius: 50%; 
-}
-
-/* --- Main Dashboard Area --- */
-.main-content {
+/* --- Ruler Container Wrapper --- */
+.ruler-container {
+  /* This ensures the vertical ladder fills exactly the remaining height of the sidebar */
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 2.5rem;
-  height: 100%; /* Changed from 100vh */
-  overflow-y: auto; /* Now ONLY the main dashboard area scrolls if the table gets too long */
+  min-height: 0; 
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
+/* ... (Keep all your existing Main Content, Dashboard Header, Chart, and Table CSS below here exactly as they were) ... */
 
-.ticker {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem 0;
-  letter-spacing: -0.5px;
-  color: var(--text-main);
+.sidebar-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
-
-.expiry {
-  color: var(--text-muted);
-  font-size: 1rem;
-  font-weight: 500;
-}
-
+.status-indicator { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 500;}
+.status-dot { width: 8px; height: 8px; background-color: #10B981; border-radius: 50%; }
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 2.5rem; height: 100%; overflow-y: auto; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+.ticker { font-size: 2.2rem; font-weight: 700; margin: 0 0 0.25rem 0; letter-spacing: -0.5px; color: var(--text-main); }
+.expiry { color: var(--text-muted); font-size: 1rem; font-weight: 500; }
 .status-block { font-size: 0.95rem; font-weight: 500; }
 .loading-text { color: var(--text-muted); }
 .success-text { color: var(--text-muted); }
 .error-text { color: #ef4444; }
-
-/* --- Chart Area --- */
-.chart-container {
-  flex: 1;
-  min-height: 500px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  margin-bottom: 2rem;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
+.chart-container { flex: 1; min-height: 500px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; position: relative; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
 .chart-wrapper { width: 100%; height: 100%; padding: 1rem; }
-
-.empty-state {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.spinner {
-  width: 24px; height: 24px;
-  border: 2px solid var(--border-color);
-  border-top-color: var(--accent-color);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* --- Raw Data Table --- */
-.data-table-container {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.data-table-container summary {
-  padding: 1rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-main);
-  cursor: pointer;
-  user-select: none;
-  background-color: var(--bg-main);
-  border-bottom: 1px solid transparent;
-}
-
-.data-table-container[open] summary { 
-  border-bottom-color: var(--border-color); 
-}
-
-.table-scroll {
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 0;
-}
-
-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-}
-
-th { 
-  text-align: right; 
-  padding: 0.75rem 1.5rem; 
-  color: var(--text-muted); 
-  font-weight: 600; 
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border-color); 
-  background-color: var(--bg-main);
-  position: sticky;
-  top: 0;
-}
+.empty-state { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500; }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.data-table-container { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+.data-table-container summary { padding: 1rem 1.5rem; font-size: 0.95rem; font-weight: 600; color: var(--text-main); cursor: pointer; user-select: none; background-color: var(--bg-main); border-bottom: 1px solid transparent; }
+.data-table-container[open] summary { border-bottom-color: var(--border-color); }
+.table-scroll { max-height: 400px; overflow-y: auto; padding: 0; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: right; padding: 0.75rem 1.5rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); background-color: var(--bg-main); position: sticky; top: 0; }
 th:first-child { text-align: left; }
-
-td { 
-  text-align: right; 
-  padding: 0.75rem 1.5rem; 
-  color: var(--text-main); 
-  border-bottom: 1px solid var(--border-color); 
-  /* Forces numbers to perfectly align vertically */
-  font-variant-numeric: tabular-nums; 
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.9rem;
-}
+td { text-align: right; padding: 0.75rem 1.5rem; color: var(--text-main); border-bottom: 1px solid var(--border-color); font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; }
 td:first-child { text-align: left; }
-
-.table-footer { 
-  padding: 1rem 1.5rem; 
-  font-size: 0.85rem; 
-  color: var(--text-muted); 
-  background-color: var(--bg-main);
-}
-
-/* Animations */
+.table-footer { padding: 1rem 1.5rem; font-size: 0.85rem; color: var(--text-muted); background-color: var(--bg-main); }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
