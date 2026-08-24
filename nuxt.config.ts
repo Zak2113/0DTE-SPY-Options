@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/color-mode'],
+  modules: ['@nuxtjs/color-mode', 'nuxt-auth-utils'],
   colorMode: {
     preference: 'system', // default value of $colorMode.preference
     fallback: 'dark', // fallback value if not system preference found
