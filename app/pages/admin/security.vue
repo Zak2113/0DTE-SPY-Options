@@ -1,6 +1,6 @@
 <!-- app/pages/admin/security.vue -->
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin' , middleware: ['admin']})
 
 const securityStats = [
   {

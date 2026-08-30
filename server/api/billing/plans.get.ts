@@ -1,16 +1,16 @@
+// server/api/billing/plans.get.ts
 import Stripe from 'stripe'
 
 export default defineCachedEventHandler(async () => {
   const config = useRuntimeConfig()
   const stripe = new Stripe(config.stripeSecretKey)
 
-  // Fetch all active prices and expand the associated product data
+  // Fetch all active prices and expand the product data
   const { data: prices } = await stripe.prices.list({
     active: true,
     expand: ['data.product'],
   })
 
-  // Format the data cleanly for the frontend
   const formattedPlans = prices.map((price) => {
     const product = price.product as Stripe.Product
     
@@ -18,22 +18,22 @@ export default defineCachedEventHandler(async () => {
       priceId: price.id,
       name: product.name,
       description: product.description,
-      // Convert cents to formatted dollars (e.g., 2900 -> $29.00)
       priceFormatted: new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: price.currency,
       }).format((price.unit_amount || 0) / 100),
-      interval: price.recurring?.interval, // 'month' or 'year'
+      interval: price.recurring?.interval, 
       
-      // Extract the metadata we set in the Stripe Dashboard
       tier: product.metadata.tier || 'basic',
       features: product.metadata.features ? product.metadata.features.split(',') : [],
       highlighted: product.metadata.highlighted === 'true',
-      order: parseInt(product.metadata.order || '1', 10),
+      
+      // Parse your 'order' metadata string into a number (defaults to 99 so missing ones go to the end)
+      order: parseInt(product.metadata.order || '99', 10),
     }
   })
 
-  // Sort plans by the 'order' metadata so Basic -> Essential -> Pro
+  // Sort explicitly by the order metadata you defined in Stripe
   return formattedPlans.sort((a, b) => a.order - b.order)
 
 }, {

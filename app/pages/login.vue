@@ -1,12 +1,15 @@
 <script setup lang="ts">
 const { user, fetch: refreshSession } = useUserSession()
 
+
+
 useHead({
   title: 'Login',
 })
 
 definePageMeta({
-  middleware: ['logged']
+  middleware: ['logged'],
+  layout: 'auth'
 })
 
 const credentials = reactive({
@@ -147,14 +150,14 @@ async function login() {
 
 <style scoped>
 .login-page {
-  min-height: 100vh;
+  
   width: 100%;
 
   display: flex;
-  align-items: center;
+  
   justify-content: center;
 
-  padding: 2rem;
+  
 
   background-color: var(--bg-main);
   color: var(--text-main);

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 const { fetch: refreshSession } = useUserSession()
 
+definePageMeta({
+  layout: 'auth'
+})
+
 useHead({
   title: 'Create Account',
 })
@@ -188,14 +192,14 @@ async function register() {
 
 <style scoped>
 .register-page {
-  min-height: 100vh;
+  
   width: 100%;
 
   display: flex;
-  align-items: center;
+  
   justify-content: center;
 
-  padding: 2rem;
+  
 
   background-color: var(--bg-main);
   color: var(--text-main);

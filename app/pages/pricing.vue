@@ -24,7 +24,60 @@
       </div>
 
       <template v-else>
-        <!-- DYNAMIC TIERS (From Stripe) -->
+        <!-- STATIC TIER 01 - BASIC (Free) -->
+        <article class="pricing-card">
+          <div class="card-top">
+            <div class="tier-label">
+              TIER 01
+            </div>
+
+            <h2 class="tier-name">
+              BASIC
+            </h2>
+
+            <p class="tier-description">
+              Explore the archive and get a feel for the platform.
+            </p>
+          </div>
+
+          <div class="price">
+            <span class="price-amount">$0</span>
+            <span class="price-period">/ MONTH</span>
+          </div>
+
+          <div class="card-divider"></div>
+
+          <ul class="feature-list">
+            <li>
+              <span class="feature-marker">+</span>
+              Limited historical sessions
+            </li>
+            <li>
+              <span class="feature-marker">+</span>
+              1-minute OHLCV data
+            </li>
+            <li>
+              <span class="feature-marker">+</span>
+              Basic charting
+            </li>
+            <li>
+              <span class="feature-marker">+</span>
+              SPY 0DTE archive access
+            </li>
+          </ul>
+
+          <button
+            @click="handleBasicSignup"
+            class="plan-button secondary"
+            :disabled="user?.tier === 'basic'"
+            :style="user?.tier === 'basic' ? 'opacity: 0.7; cursor: not-allowed;' : ''"
+          >
+            {{ user?.tier === 'basic' ? 'CURRENT PLAN' : 'GET STARTED' }}
+            <span v-if="user?.tier !== 'basic'">→</span>
+          </button>
+        </article>
+
+        <!-- DYNAMIC TIERS 02 & 03 (Essential & Pro from Stripe) -->
         <article 
           v-for="(plan, index) in plans" 
           :key="plan.priceId"
@@ -37,7 +90,8 @@
 
           <div class="card-top">
             <div class="tier-label">
-              TIER 0{{ index + 1 }}
+              <!-- Starts at 2 since Basic is 1 -->
+              TIER 0{{ index + 2 }}
             </div>
 
             <h2 class="tier-name">
@@ -79,8 +133,8 @@
         <article class="pricing-card coming-soon">
           <div class="card-top">
             <div class="tier-label">
-              <!-- Dynamically calculate the next number -->
-              TIER 0{{ (plans?.length || 3) + 1 }}
+              <!-- Dynamically calculate the next number (usually 04) -->
+              TIER 0{{ (plans?.length || 2) + 2 }}
             </div>
 
             <h2 class="tier-name">
@@ -140,30 +194,34 @@
 definePageMeta({
   layout: 'default'
 })
+useHead({
+  title: 'Pricing',
+})
 
-// Fetch plans from our cached API endpoint
+// Fetch plans from our cached Stripe API endpoint
 const { data: plans, pending } = await useFetch('/api/billing/plans')
 
-// Use session to see if user is logged in and what tier they are on
+// Use session to see if user is logged in and what tier they are currently on
 const { user, loggedIn } = useUserSession()
 
-async function handleUpgrade(priceId: string, planTier: string) {
-  // 1. Unauthenticated users are redirected to signup with the intended priceId
+// Handler for the free tier
+function handleBasicSignup() {
   if (!loggedIn.value) {
-    return navigateTo(`/signup?priceId=${priceId}`)
+    return navigateTo('/register')
+  }
+  // If they are already logged in but on a different plan (or already on Basic)
+  return navigateTo('/dashboard')
+}
+
+// Handler for the paid Stripe tiers
+async function handleUpgrade(priceId: string, planTier: string) {
+  // 1. Unauthenticated users are redirected to register with the intended priceId
+  if (!loggedIn.value) {
+    return navigateTo(`/register?priceId=${priceId}`)
   }
 
-  // 2. If it's a free tier and they are logged in, just go to the dashboard
-  if (planTier === 'basic') {
-    return navigateTo('/dashboard')
-  }
-
-  // 3. Authenticated users going for a paid tier -> Stripe Checkout
+  // 2. Authenticated users going for a paid tier -> Call our Nitro endpoint
   try {
-    const url  = await $fetch('/api/billing/checkout', {
-      method: 'POST',
-      body: { priceId }
-    })
     
     
   } catch (error) {

@@ -14,10 +14,6 @@ async function logout () {
 }
 
 
-useHead({
-  title: 'Pricing',
-})
-
 </script>
 
 

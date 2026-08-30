@@ -31,6 +31,18 @@ const colorMode = useColorMode();
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
 };
+
+useHead({
+  // The default title if a page doesn't set one at all
+  title: 'My Awesome SaaS',
+  
+  // A template that automatically formats page-specific titles
+  // %s is replaced by the page's specific title
+  titleTemplate: (titleChunk) => {
+    return titleChunk ? `${titleChunk} - My Awesome SaaS` : 'My Awesome SaaS';
+  }
+})
+
 </script>
 
 <style>

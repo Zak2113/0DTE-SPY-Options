@@ -1,295 +1,858 @@
 <!-- app/pages/admin/index.vue -->
-
 <script setup lang="ts">
-definePageMeta({
-  layout: 'admin',
-  middleware: ['admin'],
+definePageMeta({ layout: 'admin' , middleware: ['admin']})
+
+const timeframe = ref('30 Days')
+
+const metrics = [
+  {
+    label: 'Total Users',
+    value: '1,284',
+    change: '+8.4%',
+    positive: true,
+  },
+  {
+    label: 'Active Subscriptions',
+    value: '342',
+    change: '+12.1%',
+    positive: true,
+  },
+  {
+    label: 'New Users',
+    value: '87',
+    change: '+15.2%',
+    positive: true,
+  },
+  {
+    label: 'MRR',
+    value: '$9,918',
+    change: '+11.3%',
+    positive: true,
+  },
+  {
+    label: 'New Subscriptions',
+    value: '42',
+    change: '+16.7%',
+    positive: true,
+  },
+  {
+    label: 'Backtests',
+    value: '18,492',
+    change: '+23.4%',
+    positive: true,
+  },
+]
+
+const subscriptionStats = [
+  {
+    label: 'Active',
+    value: 342,
+    percentage: 26.6,
+  },
+  {
+    label: 'No Subscription',
+    value: 942,
+    percentage: 73.4,
+  },
+]
+
+const activeUsers = [
+  {
+    name: 'Alex Johnson',
+    email: 'alex@example.com',
+    backtests: 842,
+    plan: 'Pro',
+  },
+  {
+    name: 'Daniel Brooks',
+    email: 'daniel@example.com',
+    backtests: 721,
+    plan: 'Pro',
+  },
+  {
+    name: 'Ryan Anderson',
+    email: 'ryan@example.com',
+    backtests: 604,
+    plan: 'Pro',
+  },
+  {
+    name: 'Sarah Williams',
+    email: 'sarah@example.com',
+    backtests: 491,
+    plan: 'Essential',
+  },
+  {
+    name: 'Michael Chen',
+    email: 'michael@example.com',
+    backtests: 184,
+    plan: 'Essential',
+  },
+]
+
+const popularSymbols = [
+  { symbol: 'SPY', count: '4,821', percentage: 100 },
+  { symbol: 'QQQ', count: '3,412', percentage: 70.8 },
+  { symbol: 'NVDA', count: '2,981', percentage: 61.8 },
+  { symbol: 'TSLA', count: '2,104', percentage: 43.6 },
+  { symbol: 'AAPL', count: '1,884', percentage: 39.1 },
+  { symbol: 'IWM', count: '1,221', percentage: 25.3 },
+]
+
+const systemHealth = [
+  {
+    name: 'Authentication',
+    description: 'User authentication and session management',
+    status: 'Operational',
+  },
+  {
+    name: 'Database',
+    description: 'Primary application database',
+    status: 'Operational',
+  },
+  {
+    name: 'Market Data',
+    description: 'Historical options market data',
+    status: 'Operational',
+  },
+  {
+    name: 'Payments',
+    description: 'Subscription and billing services',
+    status: 'Operational',
+  },
+  {
+    name: 'Backtest Engine',
+    description: 'Backtest execution service',
+    status: 'Operational',
+  },
+]
+
+const backtestStats = [
+  {
+    label: 'Today',
+    value: '684',
+  },
+  {
+    label: 'This Week',
+    value: '4,821',
+  },
+  {
+    label: 'This Month',
+    value: '18,492',
+  },
+  {
+    label: 'Failed',
+    value: '23',
+  },
+]
+
+const revenuePoints = [
+  { x: 0, y: 116 },
+  { x: 30, y: 111 },
+  { x: 60, y: 113 },
+  { x: 90, y: 102 },
+  { x: 120, y: 106 },
+  { x: 150, y: 91 },
+  { x: 180, y: 95 },
+  { x: 210, y: 78 },
+  { x: 240, y: 82 },
+  { x: 270, y: 67 },
+  { x: 300, y: 70 },
+  { x: 330, y: 55 },
+  { x: 360, y: 59 },
+  { x: 390, y: 43 },
+  { x: 420, y: 48 },
+  { x: 450, y: 34 },
+  { x: 480, y: 37 },
+  { x: 510, y: 22 },
+  { x: 540, y: 27 },
+  { x: 570, y: 14 },
+]
+
+const revenuePath = computed(() => {
+  return revenuePoints
+    .map((point, index) => {
+      return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+    })
+    .join(' ')
 })
 
-const kpis = [
-  {
-    label: 'Total Revenue (MRR)',
-    value: '$14,250',
-    change: '+12.4%',
-    isPositive: true,
-  },
-  {
-    label: 'Total Accounts',
-    value: '1,842',
-    change: '+8.1%',
-    isPositive: true,
-  },
-  {
-    label: 'Active (30d)',
-    value: '1,120',
-    change: '+3.2%',
-    isPositive: true,
-  },
-  {
-    label: 'Churn Rate',
-    value: '1.4%',
-    change: '-0.3%',
-    isPositive: true,
-  },
+const revenueAreaPath = computed(() => {
+  return `${revenuePath.value} L 570 140 L 0 140 Z`
+})
+
+const userGrowthPoints = [
+  { x: 0, y: 121 },
+  { x: 30, y: 116 },
+  { x: 60, y: 118 },
+  { x: 90, y: 106 },
+  { x: 120, y: 109 },
+  { x: 150, y: 99 },
+  { x: 180, y: 91 },
+  { x: 210, y: 94 },
+  { x: 240, y: 82 },
+  { x: 270, y: 74 },
+  { x: 300, y: 78 },
+  { x: 330, y: 61 },
+  { x: 360, y: 65 },
+  { x: 390, y: 53 },
+  { x: 420, y: 48 },
+  { x: 450, y: 37 },
+  { x: 480, y: 42 },
+  { x: 510, y: 29 },
+  { x: 540, y: 22 },
+  { x: 570, y: 14 },
 ]
 
-const recentSignups = [
-  {
-    name: 'Alex Rivera',
-    email: 'alex@acme.corp',
-    tier: 'PRO',
-    time: '12m ago',
-  },
-  {
-    name: 'Sarah Chen',
-    email: 'sarah.c@dev.io',
-    tier: 'ESSENTIAL',
-    time: '45m ago',
-  },
-  {
-    name: 'Marcus Bell',
-    email: 'mbell@studio.design',
-    tier: 'BASIC',
-    time: '2h ago',
-  },
+const userGrowthPath = computed(() => {
+  return userGrowthPoints
+    .map((point, index) => {
+      return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+    })
+    .join(' ')
+})
+
+const backtestPoints = [
+  { x: 0, y: 112 },
+  { x: 30, y: 108 },
+  { x: 60, y: 115 },
+  { x: 90, y: 94 },
+  { x: 120, y: 101 },
+  { x: 150, y: 87 },
+  { x: 180, y: 91 },
+  { x: 210, y: 76 },
+  { x: 240, y: 82 },
+  { x: 270, y: 61 },
+  { x: 300, y: 69 },
+  { x: 330, y: 52 },
+  { x: 360, y: 57 },
+  { x: 390, y: 43 },
+  { x: 420, y: 49 },
+  { x: 450, y: 31 },
+  { x: 480, y: 38 },
+  { x: 510, y: 25 },
+  { x: 540, y: 29 },
+  { x: 570, y: 16 },
 ]
 
-const subscriptionDistribution = [
-  {
-    label: 'Basic',
-    users: '1,240 users',
-    percentage: 67,
-    className: 'basic',
-  },
-  {
-    label: 'Essential',
-    users: '482 users',
-    percentage: 26,
-    className: 'essential',
-  },
-  {
-    label: 'Pro',
-    users: '120 users',
-    percentage: 7,
-    className: 'pro',
-  },
-]
+const backtestPath = computed(() => {
+  return backtestPoints
+    .map((point, index) => {
+      return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+    })
+    .join(' ')
+})
+
+function viewUsers() {
+  navigateTo('/admin/users')
+}
+
+function viewSystem() {
+  navigateTo('/admin/system')
+}
+
+function viewUser(user: { email: string }) {
+  console.log('View user:', user.email)
+}
+
+function changeTimeframe() {
+  // Connect this to your analytics API when ready.
+  console.log('Timeframe changed:', timeframe.value)
+}
 </script>
 
 <template>
-  <div class="overview-page">
+  <div class="admin-page">
     <!-- Page Header -->
-    <section class="page-header">
+    <header class="page-header">
       <div>
-        <div class="eyebrow">
-          ADMIN // PLATFORM OVERVIEW
-        </div>
+        <div class="eyebrow">OVERVIEW</div>
 
-        <h1 class="page-title">
-          Platform Overview.
-        </h1>
+        <h1>Dashboard</h1>
 
-        <p class="page-description">
-          High-level business performance and platform vitals.
+        <p>
+          Monitor platform performance, subscriptions, and product usage.
         </p>
       </div>
 
-      <div class="header-status">
-        <span class="status-dot"></span>
-        LIVE DATA
-      </div>
-    </section>
-
-    <!-- KPI Grid -->
-    <section class="kpi-grid">
-      <div
-        v-for="kpi in kpis"
-        :key="kpi.label"
-        class="kpi-item"
-      >
-        <div class="kpi-label">
-          {{ kpi.label }}
-        </div>
-
-        <div class="kpi-value">
-          {{ kpi.value }}
-        </div>
-
-        <div
-          class="kpi-change"
-          :class="{
-            positive: kpi.isPositive,
-            negative: !kpi.isPositive,
-          }"
+      <div class="header-controls">
+        <select
+          v-model="timeframe"
+          aria-label="Dashboard timeframe"
+          @change="changeTimeframe"
         >
-          {{ kpi.change }}
+          <option>7 Days</option>
+          <option>30 Days</option>
+          <option>90 Days</option>
+          <option>1 Year</option>
+        </select>
+      </div>
+    </header>
 
-          <span>
-            VS LAST MONTH
-          </span>
-        </div>
+    <!-- Key Metrics -->
+    <section class="section">
+      <div class="metric-grid">
+        <article
+          v-for="metric in metrics"
+          :key="metric.label"
+          class="metric-card"
+        >
+          <div class="metric-label">
+            {{ metric.label }}
+          </div>
+
+          <div class="metric-value">
+            {{ metric.value }}
+          </div>
+
+          <div
+            class="metric-change"
+            :class="{ positive: metric.positive }"
+          >
+            <span class="change-arrow">
+              {{ metric.positive ? '↑' : '↓' }}
+            </span>
+
+            {{ metric.change }}
+
+            <span class="change-period">
+              vs previous period
+            </span>
+          </div>
+        </article>
       </div>
     </section>
 
-    <!-- Dashboard Grid -->
-    <section class="dashboard-grid">
-      <!-- Subscription Distribution -->
-      <div class="panel distribution-panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-eyebrow">
-              SUBSCRIPTIONS
-            </div>
-
-            <h2 class="panel-title">
-              Subscription Distribution
-            </h2>
-          </div>
-
-          <div class="panel-total">
-            1,842
-          </div>
-        </div>
-
-        <div class="distribution-list">
-          <div
-            v-for="subscription in subscriptionDistribution"
-            :key="subscription.label"
-            class="distribution-item"
-          >
-            <div class="distribution-meta">
-              <div class="distribution-name">
-                {{ subscription.label }}
-
-                <span>
-                  ({{ subscription.users }})
-                </span>
+    <!-- Revenue + User Growth -->
+    <section class="section">
+      <div class="two-column">
+        <!-- Revenue -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                REVENUE
               </div>
 
-              <div class="distribution-percentage">
-                {{ subscription.percentage }}%
+              <h2>Monthly Recurring Revenue</h2>
+
+              <p>
+                Recurring subscription revenue over the selected period.
+              </p>
+            </div>
+
+            <div class="chart-value">
+              $9,918
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <svg
+              class="line-chart"
+              viewBox="0 0 570 160"
+              preserveAspectRatio="none"
+              aria-label="Monthly recurring revenue chart"
+            >
+              <defs>
+                <linearGradient
+                  id="revenue-gradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stop-color="var(--accent-color)"
+                    stop-opacity="0.12"
+                  />
+
+                  <stop
+                    offset="100%"
+                    stop-color="var(--accent-color)"
+                    stop-opacity="0"
+                  />
+                </linearGradient>
+              </defs>
+
+              <line
+                x1="0"
+                y1="20"
+                x2="570"
+                y2="20"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="60"
+                x2="570"
+                y2="60"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="100"
+                x2="570"
+                y2="100"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="140"
+                x2="570"
+                y2="140"
+                class="chart-grid-line"
+              />
+
+              <path
+                :d="revenueAreaPath"
+                fill="url(#revenue-gradient)"
+              />
+
+              <path
+                :d="revenuePath"
+                class="chart-line"
+              />
+            </svg>
+
+            <div class="chart-labels">
+              <span>Aug 1</span>
+              <span>Aug 8</span>
+              <span>Aug 15</span>
+              <span>Aug 22</span>
+              <span>Aug 30</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- User Growth -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                USER GROWTH
+              </div>
+
+              <h2>New Users</h2>
+
+              <p>
+                New user registrations over the selected period.
+              </p>
+            </div>
+
+            <div class="chart-value">
+              87
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <svg
+              class="line-chart"
+              viewBox="0 0 570 160"
+              preserveAspectRatio="none"
+              aria-label="User growth chart"
+            >
+              <defs>
+                <linearGradient
+                  id="users-gradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stop-color="var(--accent-color)"
+                    stop-opacity="0.12"
+                  />
+
+                  <stop
+                    offset="100%"
+                    stop-color="var(--accent-color)"
+                    stop-opacity="0"
+                  />
+                </linearGradient>
+              </defs>
+
+              <line
+                x1="0"
+                y1="20"
+                x2="570"
+                y2="20"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="60"
+                x2="570"
+                y2="60"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="100"
+                x2="570"
+                y2="100"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="140"
+                x2="570"
+                y2="140"
+                class="chart-grid-line"
+              />
+
+              <path
+                :d="`${userGrowthPath} L 570 140 L 0 140 Z`"
+                fill="url(#users-gradient)"
+              />
+
+              <path
+                :d="userGrowthPath"
+                class="chart-line"
+              />
+            </svg>
+
+            <div class="chart-labels">
+              <span>Aug 1</span>
+              <span>Aug 8</span>
+              <span>Aug 15</span>
+              <span>Aug 22</span>
+              <span>Aug 30</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Product Usage -->
+    <section class="section">
+      <div class="two-column">
+        <!-- Backtest Activity -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                PRODUCT USAGE
+              </div>
+
+              <h2>Backtest Activity</h2>
+
+              <p>
+                Backtest execution across the platform.
+              </p>
+            </div>
+
+            <div class="chart-value">
+              18,492
+            </div>
+          </div>
+
+          <div class="usage-chart">
+            <svg
+              class="line-chart"
+              viewBox="0 0 570 160"
+              preserveAspectRatio="none"
+              aria-label="Backtest activity chart"
+            >
+              <line
+                x1="0"
+                y1="20"
+                x2="570"
+                y2="20"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="60"
+                x2="570"
+                y2="60"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="100"
+                x2="570"
+                y2="100"
+                class="chart-grid-line"
+              />
+
+              <line
+                x1="0"
+                y1="140"
+                x2="570"
+                y2="140"
+                class="chart-grid-line"
+              />
+
+              <path
+                :d="backtestPath"
+                class="chart-line"
+              />
+            </svg>
+
+            <div class="chart-labels">
+              <span>Aug 1</span>
+              <span>Aug 8</span>
+              <span>Aug 15</span>
+              <span>Aug 22</span>
+              <span>Aug 30</span>
+            </div>
+          </div>
+
+          <div class="backtest-stats">
+            <div
+              v-for="stat in backtestStats"
+              :key="stat.label"
+              class="backtest-stat"
+            >
+              <span>{{ stat.label }}</span>
+
+              <strong>{{ stat.value }}</strong>
+            </div>
+          </div>
+        </article>
+
+        <!-- Subscriptions -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                SUBSCRIPTIONS
+              </div>
+
+              <h2>Subscription Overview</h2>
+
+              <p>
+                Current subscription status across all users.
+              </p>
+            </div>
+          </div>
+
+          <div class="subscription-content">
+            <div class="subscription-total">
+              <div class="subscription-number">
+                342
+              </div>
+
+              <div class="subscription-label">
+                Active subscriptions
               </div>
             </div>
 
-            <div class="distribution-track">
+            <div class="subscription-bar">
               <div
-                class="distribution-bar"
-                :class="subscription.className"
+                class="subscription-active"
                 :style="{
-                  width: `${subscription.percentage}%`,
+                  width: `${subscriptionStats[0]?.percentage}%`,
                 }"
               ></div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Recent Registrations -->
-      <div class="panel registrations-panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-eyebrow">
-              ACTIVITY
-            </div>
-
-            <h2 class="panel-title">
-              Recent Registrations
-            </h2>
-          </div>
-
-          <NuxtLink
-            to="/admin/users"
-            class="panel-link"
-          >
-            VIEW ALL →
-          </NuxtLink>
-        </div>
-
-        <div class="registrations-list">
-          <div
-            v-for="user in recentSignups"
-            :key="user.email"
-            class="registration"
-          >
-            <div class="registration-main">
-              <div class="registration-name">
-                {{ user.name }}
-              </div>
-
-              <div class="registration-email">
-                {{ user.email }}
-              </div>
-            </div>
-
-            <div class="registration-meta">
-              <span
-                class="tier-badge"
-                :class="{
-                  'tier-basic': user.tier === 'BASIC',
-                  'tier-essential': user.tier === 'ESSENTIAL',
-                  'tier-pro': user.tier === 'PRO',
-                }"
+            <div class="subscription-legend">
+              <div
+                v-for="stat in subscriptionStats"
+                :key="stat.label"
+                class="subscription-item"
               >
-                {{ user.tier }}
-              </span>
+                <div class="subscription-item-left">
+                  <span
+                    class="legend-dot"
+                    :class="{
+                      active: stat.label === 'Active',
+                    }"
+                  ></span>
 
-              <span class="registration-time">
-                {{ user.time }}
-              </span>
+                  <span>{{ stat.label }}</span>
+                </div>
+
+                <div class="subscription-item-right">
+                  <strong>{{ stat.value }}</strong>
+
+                  <span>{{ stat.percentage }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="conversion-box">
+              <div>
+                <span class="conversion-label">
+                  Paid Conversion
+                </span>
+
+                <span class="conversion-description">
+                  Percentage of users with an active subscription.
+                </span>
+              </div>
+
+              <strong>26.6%</strong>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </section>
 
-    <!-- System Summary -->
-    <section class="system-summary">
-      <div class="summary-item">
-        <span class="summary-label">
-          PLATFORM STATUS
-        </span>
+    <!-- Users + Popular Symbols -->
+    <section class="section">
+      <div class="two-column">
+        <!-- Most Active Users -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                USER ENGAGEMENT
+              </div>
 
-        <span class="summary-value online">
-          <span class="status-dot"></span>
-          OPERATIONAL
-        </span>
+              <h2>Most Active Users</h2>
+
+              <p>
+                Users with the highest backtest activity.
+              </p>
+            </div>
+
+            <button
+              class="text-button"
+              type="button"
+              @click="viewUsers"
+            >
+              View All
+            </button>
+          </div>
+
+          <div class="user-list">
+            <button
+              v-for="user in activeUsers"
+              :key="user.email"
+              class="user-row"
+              type="button"
+              @click="viewUser(user)"
+            >
+              <div class="user-avatar">
+                {{ user.name.charAt(0) }}
+              </div>
+
+              <div class="user-info">
+                <div class="user-name">
+                  {{ user.name }}
+                </div>
+
+                <div class="user-email">
+                  {{ user.email }}
+                </div>
+              </div>
+
+              <div class="user-stats">
+                <strong>{{ user.backtests }}</strong>
+
+                <span>backtests</span>
+              </div>
+
+              <span class="plan-badge">
+                {{ user.plan }}
+              </span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Popular Symbols -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-label">
+                MARKET DATA
+              </div>
+
+              <h2>Most Backtested</h2>
+
+              <p>
+                Most frequently backtested underlying symbols.
+              </p>
+            </div>
+          </div>
+
+          <div class="symbol-list">
+            <div
+              v-for="symbol in popularSymbols"
+              :key="symbol.symbol"
+              class="symbol-row"
+            >
+              <div class="symbol-name">
+                {{ symbol.symbol }}
+              </div>
+
+              <div class="symbol-bar-container">
+                <div
+                  class="symbol-bar"
+                  :style="{
+                    width: `${symbol.percentage}%`,
+                  }"
+                ></div>
+              </div>
+
+              <div class="symbol-count">
+                {{ symbol.count }}
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
+    </section>
 
-      <div class="summary-divider"></div>
+    <!-- System Health -->
+    <section class="section">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-label">
+              SYSTEM HEALTH
+            </div>
 
-      <div class="summary-item">
-        <span class="summary-label">
-          ACTIVE ACCOUNTS
-        </span>
+            <h2>Platform Status</h2>
 
-        <span class="summary-value">
-          1,120
-        </span>
-      </div>
+            <p>
+              Current availability of the services powering the application.
+            </p>
+          </div>
 
-      <div class="summary-divider"></div>
+          <button
+            class="text-button"
+            type="button"
+            @click="viewSystem"
+          >
+            System Operations
+          </button>
+        </div>
 
-      <div class="summary-item">
-        <span class="summary-label">
-          30D RETENTION
-        </span>
+        <div class="health-grid">
+          <div
+            v-for="service in systemHealth"
+            :key="service.name"
+            class="health-item"
+          >
+            <div class="health-status">
+              <span class="health-dot"></span>
 
-        <span class="summary-value">
-          98.6%
-        </span>
-      </div>
+              <span>Operational</span>
+            </div>
 
-      <div class="summary-divider"></div>
+            <div class="health-name">
+              {{ service.name }}
+            </div>
 
-      <div class="summary-item">
-        <span class="summary-label">
-          DATA STATUS
-        </span>
-
-        <span class="summary-value">
-          CURRENT
-        </span>
-      </div>
+            <div class="health-description">
+              {{ service.description }}
+            </div>
+          </div>
+        </div>
+      </article>
     </section>
   </div>
 </template>
@@ -299,202 +862,147 @@ const subscriptionDistribution = [
    PAGE
    ========================================================= */
 
-.overview-page {
+.admin-page {
   width: 100%;
-
-  padding-top: 4rem;
-  padding-bottom: 5rem;
+  color: var(--text-main);
 }
 
 
 /* =========================================================
-   PAGE HEADER
+   HEADER
    ========================================================= */
 
 .page-header {
   display: flex;
-
   align-items: flex-end;
-
   justify-content: space-between;
-
-  gap: 2rem;
-
-  margin-bottom: 2.5rem;
-
-  padding-bottom: 2rem;
-
-  border-bottom: 1px solid var(--border-color);
-}
-
-.eyebrow {
-  margin-bottom: 0.9rem;
-
-  color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.65rem;
-
-  letter-spacing: 1.4px;
-}
-
-.page-title {
-  margin: 0 0 0.75rem;
-
-  color: var(--text-main);
-
-  font-size: 2.75rem;
-
-  font-weight: 700;
-
-  line-height: 1.1;
-
-  letter-spacing: -1px;
-}
-
-.page-description {
-  margin: 0;
-
-  color: var(--text-muted);
-
-  font-size: 0.95rem;
-
-  line-height: 1.5;
-}
-
-.header-status {
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.5rem;
-
-  padding-bottom: 0.25rem;
-
-  color: #10b981;
-
-  font-family: monospace;
-
-  font-size: 0.62rem;
-
-  font-weight: 600;
-
-  letter-spacing: 0.8px;
-
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   STATUS DOT
-   ========================================================= */
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background-color: #10b981;
-}
-
-
-/* =========================================================
-   KPI GRID
-   ========================================================= */
-
-.kpi-grid {
-  display: grid;
-
-  grid-template-columns: repeat(4, 1fr);
-
+  gap: 1rem;
   margin-bottom: 2rem;
-
-  border-top: 1px solid var(--border-color);
-
-  border-bottom: 1px solid var(--border-color);
 }
 
-.kpi-item {
-  min-height: 145px;
-
-  padding: 1.35rem 1.5rem;
-
-  border-right: 1px solid var(--border-color);
-}
-
-.kpi-item:last-child {
-  border-right: none;
-}
-
-.kpi-label {
-  margin-bottom: 0.7rem;
-
+.eyebrow,
+.section-label,
+.panel-label {
   color: var(--text-muted);
-
   font-family: monospace;
-
-  font-size: 0.62rem;
-
-  letter-spacing: 0.8px;
-
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1.1px;
   text-transform: uppercase;
 }
 
-.kpi-value {
-  margin-bottom: 0.6rem;
-
+.page-header h1 {
+  margin: 0.35rem 0 0;
   color: var(--text-main);
-
-  font-size: 1.8rem;
-
-  font-weight: 600;
-
-  line-height: 1;
-
-  font-variant-numeric: tabular-nums;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.kpi-change {
-  font-family: monospace;
-
-  font-size: 0.68rem;
-
-  font-weight: 600;
-}
-
-.kpi-change.positive {
-  color: #10b981;
-}
-
-.kpi-change.negative {
-  color: #ef4444;
-}
-
-.kpi-change span {
-  margin-left: 0.25rem;
-
+.page-header p {
+  margin: 0.35rem 0 0;
   color: var(--text-muted);
+  font-size: 0.85rem;
+}
 
+.header-controls select {
+  width: 120px;
+  height: 36px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.72rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.header-controls select:focus {
+  border-color: var(--accent-color);
+}
+
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.85rem;
+}
+
+.metric-card {
+  min-width: 0;
+  padding: 1.05rem 1.1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.metric-value {
+  margin-top: 0.45rem;
+  color: var(--text-main);
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.metric-change {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.55rem;
+  color: #dc2626;
+  font-family: monospace;
+  font-size: 0.61rem;
+  font-weight: 600;
+}
+
+.metric-change.positive {
+  color: #16a34a;
+}
+
+.change-arrow {
+  font-size: 0.7rem;
+}
+
+.change-period {
+  width: 100%;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.61rem;
   font-weight: 400;
 }
 
 
 /* =========================================================
-   DASHBOARD GRID
+   GRID
    ========================================================= */
 
-.dashboard-grid {
+.two-column {
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 2fr)
-    minmax(320px, 1fr);
-
-  gap: 1.5rem;
-
-  margin-bottom: 2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
 }
 
 
@@ -503,368 +1011,466 @@ const subscriptionDistribution = [
    ========================================================= */
 
 .panel {
-  min-width: 0;
-
-  background-color: var(--bg-card);
-
+  overflow: hidden;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
+  border-radius: 6px;
 }
 
 .panel-header {
   display: flex;
-
   align-items: flex-start;
-
   justify-content: space-between;
-
   gap: 1rem;
-
-  padding: 1.35rem 1.5rem;
-
+  padding: 1.15rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
 }
 
-.panel-eyebrow {
-  margin-bottom: 0.35rem;
-
-  color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.58rem;
-
-  letter-spacing: 1px;
-}
-
-.panel-title {
-  margin: 0;
-
+.panel-header h2 {
+  margin: 0.3rem 0 0;
   color: var(--text-main);
-
-  font-size: 1rem;
-
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
-.panel-total {
-  color: var(--text-main);
-
-  font-family: monospace;
-
-  font-size: 0.75rem;
-
-  font-weight: 600;
-}
-
-.panel-link {
+.panel-header p {
+  margin: 0.3rem 0 0;
   color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.58rem;
-
-  letter-spacing: 0.7px;
-
-  text-decoration: none;
-
-  white-space: nowrap;
-
-  transition: color 0.2s ease;
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
-.panel-link:hover {
-  color: var(--accent-color);
+.chart-value {
+  flex-shrink: 0;
+  color: var(--text-main);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 
 /* =========================================================
-   SUBSCRIPTION DISTRIBUTION
+   CHARTS
    ========================================================= */
 
-.distribution-list {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 1.5rem;
-
-  padding: 1.5rem;
+.chart-container,
+.usage-chart {
+  padding: 1rem 1.25rem 0.7rem;
 }
 
-.distribution-item {
+.line-chart {
+  display: block;
   width: 100%;
+  height: 170px;
+  overflow: visible;
 }
 
-.distribution-meta {
+.chart-grid-line {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent-color);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-labels {
   display: flex;
-
-  align-items: center;
-
   justify-content: space-between;
-
-  gap: 1rem;
-
-  margin-bottom: 0.5rem;
-}
-
-.distribution-name {
-  color: var(--text-main);
-
-  font-size: 0.82rem;
-
-  font-weight: 500;
-}
-
-.distribution-name span {
+  margin-top: 0.35rem;
   color: var(--text-muted);
-
-  font-weight: 400;
+  font-family: monospace;
+  font-size: 0.58rem;
 }
 
-.distribution-percentage {
+
+/* =========================================================
+   BACKTEST STATS
+   ========================================================= */
+
+.backtest-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.backtest-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem 1rem;
+  border-right: 1px solid var(--border-color);
+}
+
+.backtest-stat:last-child {
+  border-right: none;
+}
+
+.backtest-stat span {
+  color: var(--text-muted);
+  font-size: 0.64rem;
+}
+
+.backtest-stat strong {
   color: var(--text-main);
-
-  font-family: monospace;
-
-  font-size: 0.7rem;
-
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
-.distribution-track {
-  width: 100%;
 
-  height: 6px;
+/* =========================================================
+   SUBSCRIPTIONS
+   ========================================================= */
 
+.subscription-content {
+  padding: 1.25rem;
+}
+
+.subscription-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.subscription-number {
+  color: var(--text-main);
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.subscription-label {
+  color: var(--text-muted);
+  font-size: 0.73rem;
+}
+
+.subscription-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 1.25rem;
   overflow: hidden;
-
-  background-color: var(--bg-main);
-
-  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-main);
 }
 
-.distribution-bar {
+.subscription-active {
   height: 100%;
+  background: var(--accent-color);
 }
 
-.distribution-bar.basic {
-  background-color: #94a3b8;
+.subscription-legend {
+  margin-top: 1rem;
 }
 
-.distribution-bar.essential {
-  background-color: #10b981;
-}
-
-.distribution-bar.pro {
-  background-color: var(--accent-color);
-}
-
-
-/* =========================================================
-   RECENT REGISTRATIONS
-   ========================================================= */
-
-.registrations-list {
+.subscription-item {
   display: flex;
-
-  flex-direction: column;
-
-  padding: 0 1.5rem;
-}
-
-.registration {
-  display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
-  gap: 1rem;
-
-  padding: 1rem 0;
-
+  padding: 0.7rem 0;
   border-bottom: 1px solid var(--border-color);
 }
 
-.registration:last-child {
+.subscription-item:last-child {
   border-bottom: none;
 }
 
-.registration-main {
-  min-width: 0;
-}
-
-.registration-name {
-  margin-bottom: 0.25rem;
-
-  overflow: hidden;
-
-  color: var(--text-main);
-
-  font-size: 0.8rem;
-
-  font-weight: 600;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.registration-email {
-  overflow: hidden;
-
-  color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.6rem;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.registration-meta {
+.subscription-item-left,
+.subscription-item-right {
   display: flex;
-
-  flex-direction: column;
-
-  align-items: flex-end;
-
-  gap: 0.35rem;
-
-  flex-shrink: 0;
+  align-items: center;
 }
 
-.tier-badge {
-  padding: 0.25rem 0.45rem;
+.subscription-item-left {
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.73rem;
+}
 
+.subscription-item-right {
+  gap: 0.6rem;
+}
+
+.subscription-item-right strong {
+  color: var(--text-main);
+  font-size: 0.76rem;
+}
+
+.subscription-item-right span {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.63rem;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-color);
+}
+
+.legend-dot.active {
+  background: var(--accent-color);
+}
+
+.conversion-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
   border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-main);
+}
 
-  font-family: monospace;
+.conversion-box > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
 
-  font-size: 0.58rem;
-
+.conversion-label {
+  color: var(--text-main);
+  font-size: 0.73rem;
   font-weight: 600;
-
-  letter-spacing: 0.5px;
 }
 
-.tier-basic {
+.conversion-description {
   color: var(--text-muted);
-
-  background-color: var(--bg-main);
+  font-size: 0.65rem;
 }
 
-.tier-essential {
-  color: #166534;
-
-  background-color: #dcfce7;
-
-  border-color: #bbf7d0;
-}
-
-.tier-pro {
-  color: #1d4ed8;
-
-  background-color: #dbeafe;
-
-  border-color: #bfdbfe;
-}
-
-.registration-time {
-  color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.58rem;
+.conversion-box strong {
+  color: var(--text-main);
+  font-size: 1rem;
 }
 
 
 /* =========================================================
-   SYSTEM SUMMARY
+   BUTTONS
    ========================================================= */
 
-.system-summary {
-  display: flex;
-
-  align-items: center;
-
-  min-height: 70px;
-
-  padding: 0 1.5rem;
-
-  background-color: var(--bg-card);
-
-  border-top: 1px solid var(--border-color);
-
-  border-bottom: 1px solid var(--border-color);
-}
-
-.summary-item {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 1rem;
-
-  flex: 1;
-
-  padding: 0 1rem;
-}
-
-.summary-item:first-child {
-  padding-left: 0;
-}
-
-.summary-item:last-child {
-  padding-right: 0;
-}
-
-.summary-label {
-  color: var(--text-muted);
-
-  font-family: monospace;
-
-  font-size: 0.57rem;
-
-  letter-spacing: 0.8px;
-
-  white-space: nowrap;
-}
-
-.summary-value {
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.4rem;
-
-  color: var(--text-main);
-
-  font-family: monospace;
-
-  font-size: 0.65rem;
-
-  font-weight: 600;
-
-  white-space: nowrap;
-}
-
-.summary-value.online {
-  color: #10b981;
-}
-
-.summary-divider {
-  width: 1px;
-
-  height: 28px;
-
+.text-button {
   flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-color);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 
-  background-color: var(--border-color);
+.text-button:hover {
+  color: var(--accent-hover);
+}
+
+
+/* =========================================================
+   USERS
+   ========================================================= */
+
+.user-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.user-row:last-child {
+  border-bottom: none;
+}
+
+.user-row:hover {
+  background: var(--bg-main);
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-name {
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-email {
+  overflow: hidden;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.user-stats strong {
+  color: var(--text-main);
+  font-size: 0.74rem;
+}
+
+.user-stats span {
+  margin-top: 0.1rem;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+
+.plan-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.57rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   SYMBOLS
+   ========================================================= */
+
+.symbol-list {
+  padding: 0.65rem 1.25rem;
+}
+
+.symbol-row {
+  display: grid;
+  grid-template-columns: 42px 1fr 50px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.72rem 0;
+}
+
+.symbol-name {
+  color: var(--text-main);
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.symbol-bar-container {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-main);
+}
+
+.symbol-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-color);
+  opacity: 0.75;
+}
+
+.symbol-count {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.63rem;
+  text-align: right;
+}
+
+
+/* =========================================================
+   SYSTEM HEALTH
+   ========================================================= */
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.health-item {
+  min-width: 0;
+  padding: 1rem 1.15rem;
+  border-right: 1px solid var(--border-color);
+}
+
+.health-item:last-child {
+  border-right: none;
+}
+
+.health-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #16a34a;
+  font-family: monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.health-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.health-name {
+  margin-top: 0.55rem;
+  color: var(--text-main);
+  font-size: 0.77rem;
+  font-weight: 600;
+}
+
+.health-description {
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  line-height: 1.4;
 }
 
 
@@ -872,113 +1478,96 @@ const subscriptionDistribution = [
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 1050px) {
-  .kpi-grid {
+@media (max-width: 1200px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .health-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .health-item:nth-child(3) {
+    border-right: none;
+  }
+
+  .health-item:nth-child(n + 4) {
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 900px) {
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .health-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .kpi-item:nth-child(2) {
+  .health-item:nth-child(2n) {
     border-right: none;
   }
 
-  .kpi-item:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+  .health-item:nth-child(n + 3) {
+    border-top: 1px solid var(--border-color);
   }
 }
 
-
-@media (max-width: 750px) {
-  .overview-page {
-    padding-top: 3rem;
-
-    padding-bottom: 4rem;
-  }
-
+@media (max-width: 700px) {
   .page-header {
     align-items: flex-start;
-
     flex-direction: column;
-
-    margin-bottom: 2rem;
   }
 
-  .page-title {
-    font-size: 2.3rem;
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .kpi-grid {
+  .health-grid {
     grid-template-columns: 1fr;
   }
 
-  .kpi-item {
+  .health-item,
+  .health-item:nth-child(n + 3) {
     border-right: none;
-
+    border-top: none;
     border-bottom: 1px solid var(--border-color);
   }
 
-  .kpi-item:last-child {
+  .health-item:last-child {
     border-bottom: none;
-  }
-
-  .system-summary {
-    align-items: stretch;
-
-    flex-direction: column;
-
-    padding: 0;
-  }
-
-  .summary-item {
-    min-height: 55px;
-
-    padding: 0 1rem !important;
-
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .summary-item:last-child {
-    border-bottom: none;
-  }
-
-  .summary-divider {
-    display: none;
   }
 }
 
-
 @media (max-width: 500px) {
-  .page-title {
-    font-size: 2rem;
+  .metric-grid {
+    grid-template-columns: 1fr;
   }
 
-  .panel-header {
-    padding: 1.1rem;
+  .backtest-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .distribution-list {
-    padding: 1.1rem;
+  .backtest-stat:nth-child(2) {
+    border-right: none;
   }
 
-  .registrations-list {
-    padding: 0 1.1rem;
+  .backtest-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--border-color);
   }
 
-  .registration {
-    align-items: flex-start;
-
-    flex-direction: column;
+  .user-row {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  .registration-meta {
-    align-items: flex-start;
+  .user-email {
+    max-width: 130px;
+  }
 
-    flex-direction: row;
-
-    width: 100%;
+  .plan-badge {
+    display: none;
   }
 }
 </style>

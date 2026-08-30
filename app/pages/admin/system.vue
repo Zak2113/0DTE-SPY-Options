@@ -1,6 +1,6 @@
 <!-- app/pages/admin/system.vue -->
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: ['admin'] })
 
 const maintenanceMode = ref(false)
 const allowAdminBypass = ref(true)
