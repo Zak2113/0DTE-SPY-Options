@@ -19,9 +19,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private: Only accessible on the server
     serverDataDir: process.env.SERVER_DATA_DIR || './market_data', 
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     public: {
       // Public: Accessible in the browser
       dataBaseUrl: process.env.NUXT_PUBLIC_DATA_BASE_URL || '/api/secure-data', 
+      appUrl: process.env.NUXT_PUBLIC_APP_URL,
     }
   }
 })

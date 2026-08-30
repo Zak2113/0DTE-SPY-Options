@@ -36,7 +36,7 @@ async function register() {
   loading.value = true
 
   try {
-    await $fetch('/api/register', {
+    await $fetch('/api/auth/register', {
       method: 'POST',
       body: {
         name: credentials.name,

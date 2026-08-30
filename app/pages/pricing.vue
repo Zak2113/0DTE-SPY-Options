@@ -1,419 +1,709 @@
-<script setup lang="ts">
-useHead({
-  title: 'Pricing',
-})
-
-const plans = [
-  {
-    name: 'Basic',
-    slug: 'basic',
-    price: 0,
-    description: 'Essential tools for getting started.',
-    features: [
-      { name: 'Market data', included: true },
-      { name: 'Options chains', included: true },
-      { name: 'Saved watchlists', included: true },
-      { name: 'Advanced analytics', included: false },
-      { name: 'Real-time alerts', included: false },
-    ],
-  },
-  {
-    name: 'Pro',
-    slug: 'pro',
-    price: 19,
-    description: 'More tools for active traders.',
-    popular: true,
-    features: [
-      { name: 'Market data', included: true },
-      { name: 'Options chains', included: true },
-      { name: 'Saved watchlists', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Real-time alerts', included: true },
-    ],
-  },
-  {
-    name: 'Premium',
-    slug: 'premium',
-    price: 49,
-    description: 'The complete trading workspace.',
-    features: [
-      { name: 'Market data', included: true },
-      { name: 'Options chains', included: true },
-      { name: 'Unlimited watchlists', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Real-time alerts', included: true },
-    ],
-  },
-]
-</script>
-
 <template>
   <div class="pricing-page">
-    <header class="pricing-header">
-      <div>
-        <NuxtLink to="/" class="back-link">
-          ← Back
-        </NuxtLink>
-
-        <h1>Pricing</h1>
-        <p>
-          Choose the level of access that fits your trading.
-        </p>
+    <section class="pricing-header">
+      <div class="eyebrow">
+        ACCESS // PLANS
       </div>
-    </header>
 
-    <main class="pricing-content">
-      <div class="pricing-grid">
-        <article
-          v-for="plan in plans"
-          :key="plan.slug"
+      <h1 class="title">
+        Choose Your
+        <br />
+        Access Level.
+      </h1>
+
+      <p class="subtitle">
+        Access historical SPY 0DTE data at the level that fits
+        your workflow. Start with the archive and upgrade when
+        you need more.
+      </p>
+    </section>
+
+    <section class="pricing-grid">
+      <div v-if="pending" style="text-align: center; grid-column: 1 / -1; padding: 2rem; color: #666;">
+        Loading access plans...
+      </div>
+
+      <template v-else>
+        <!-- DYNAMIC TIERS (From Stripe) -->
+        <article 
+          v-for="(plan, index) in plans" 
+          :key="plan.priceId"
           class="pricing-card"
-          :class="{ 'pricing-card-popular': plan.popular }"
+          :class="{ 'featured': plan.highlighted }"
         >
-          <div v-if="plan.popular" class="popular-badge">
-            Most Popular
+          <div v-if="plan.highlighted" class="popular-label">
+            RECOMMENDED
           </div>
 
-          <div class="plan-header">
-            <h2>{{ plan.name }}</h2>
+          <div class="card-top">
+            <div class="tier-label">
+              TIER 0{{ index + 1 }}
+            </div>
 
-            <p class="plan-description">
+            <h2 class="tier-name">
+              {{ plan.name.toUpperCase() }}
+            </h2>
+
+            <p class="tier-description">
               {{ plan.description }}
             </p>
-
-            <div class="price">
-              <span class="price-amount">${{ plan.price }}</span>
-              <span class="price-period">/ month</span>
-            </div>
           </div>
 
-          <div class="plan-divider" />
+          <div class="price">
+            <span class="price-amount">{{ plan.priceFormatted }}</span>
+            <span class="price-period">/ {{ plan.interval ? plan.interval.toUpperCase() : 'MONTH' }}</span>
+          </div>
+
+          <div class="card-divider"></div>
 
           <ul class="feature-list">
-            <li
-              v-for="feature in plan.features"
-              :key="feature.name"
-              :class="{ 'feature-disabled': !feature.included }"
-            >
-              <span
-                class="feature-icon"
-                :class="{ included: feature.included }"
-              >
-                {{ feature.included ? '✓' : '—' }}
-              </span>
-
-              <span>{{ feature.name }}</span>
+            <li v-for="feature in plan.features" :key="feature">
+              <span class="feature-marker">+</span>
+              {{ feature.trim() }}
             </li>
           </ul>
 
           <button
+            @click="handleUpgrade(plan.priceId, plan.tier)"
             class="plan-button"
-            :class="{ 'plan-button-primary': plan.popular }"
+            :class="plan.highlighted ? 'primary' : 'secondary'"
+            :disabled="user?.tier === plan.tier"
+            :style="user?.tier === plan.tier ? 'opacity: 0.7; cursor: not-allowed;' : ''"
           >
-            {{ plan.price === 0 ? 'Get Started' : `Choose ${plan.name}` }}
+            {{ user?.tier === plan.tier ? 'CURRENT PLAN' : (plan.highlighted ? `START ${plan.name.toUpperCase()}` : 'GET STARTED') }}
+            <span v-if="user?.tier !== plan.tier">→</span>
           </button>
         </article>
-      </div>
 
-      <section class="pricing-footer">
-        <h3>Every plan includes</h3>
-
-        <div class="included-grid">
-          <div class="included-item">
-            <span class="included-icon">✓</span>
-            <div>
-              <strong>Secure account</strong>
-              <p>Your account and data stay protected.</p>
+        <!-- STATIC TIER 04 - ENTERPRISE (Coming Soon) -->
+        <article class="pricing-card coming-soon">
+          <div class="card-top">
+            <div class="tier-label">
+              <!-- Dynamically calculate the next number -->
+              TIER 0{{ (plans?.length || 3) + 1 }}
             </div>
+
+            <h2 class="tier-name">
+              ENTERPRISE
+            </h2>
+
+            <p class="tier-description">
+              Advanced access and tooling for professional teams.
+            </p>
           </div>
 
-          <div class="included-item">
-            <span class="included-icon">✓</span>
-            <div>
-              <strong>Market access</strong>
-              <p>Access the tools you need to analyze markets.</p>
-            </div>
+          <div class="coming-soon-price">
+            COMING SOON
           </div>
 
-          <div class="included-item">
-            <span class="included-icon">✓</span>
-            <div>
-              <strong>No contracts</strong>
-              <p>Cancel your subscription whenever you want.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+          <div class="card-divider"></div>
+
+          <ul class="feature-list">
+            <li>
+              <span class="feature-marker">+</span>
+              Everything in PRO
+            </li>
+            <li>
+              <span class="feature-marker">+</span>
+              Custom solutions
+            </li>
+          </ul>
+
+          <button
+            type="button"
+            class="plan-button disabled"
+            disabled
+          >
+            COMING SOON
+          </button>
+        </article>
+      </template>
+    </section>
+
+    <section class="pricing-note">
+      <p>
+        All plans provide access to historical SPY 0DTE market data.
+        Data availability and archive coverage may vary by plan.
+      </p>
+
+      <NuxtLink
+        to="/faq"
+        class="faq-link"
+      >
+        VIEW FAQ →
+      </NuxtLink>
+    </section>
   </div>
 </template>
 
+<script setup lang="ts">
+definePageMeta({
+  layout: 'default'
+})
+
+// Fetch plans from our cached API endpoint
+const { data: plans, pending } = await useFetch('/api/billing/plans')
+
+// Use session to see if user is logged in and what tier they are on
+const { user, loggedIn } = useUserSession()
+
+async function handleUpgrade(priceId: string, planTier: string) {
+  // 1. Unauthenticated users are redirected to signup with the intended priceId
+  if (!loggedIn.value) {
+    return navigateTo(`/signup?priceId=${priceId}`)
+  }
+
+  // 2. If it's a free tier and they are logged in, just go to the dashboard
+  if (planTier === 'basic') {
+    return navigateTo('/dashboard')
+  }
+
+  // 3. Authenticated users going for a paid tier -> Stripe Checkout
+  try {
+    const url  = await $fetch('/api/billing/checkout', {
+      method: 'POST',
+      body: { priceId }
+    })
+    
+    
+  } catch (error) {
+    console.error('Failed to start checkout:', error)
+    alert('Failed to connect to checkout. Please try again.')
+  }
+}
+</script>
+
 <style scoped>
+/* =========================================================
+   PAGE
+   ========================================================= */
+
 .pricing-page {
-  min-height: 100vh;
   width: 100%;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  padding: 2.5rem;
-  overflow-y: auto;
-}
 
-.pricing-header {
-  max-width: 1200px;
-  margin: 0 auto 3rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.back-link {
-  display: inline-block;
-  margin-bottom: 1.5rem;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.back-link:hover {
-  color: var(--text-main);
-}
-
-.pricing-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: 2.2rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.pricing-header p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
-.pricing-content {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
-}
-
-.pricing-card {
-  position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
-  padding: 1.75rem;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.08),
-    0 2px 4px -1px rgba(0, 0, 0, 0.04);
+
+  padding-top: 4.5rem;
+  padding-bottom: 7rem;
 }
 
-.pricing-card-popular {
-  border-color: var(--accent-color, #3b82f6);
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.pricing-header {
+  max-width: 700px;
+
+  margin-bottom: 4rem;
 }
 
-.popular-badge {
-  position: absolute;
-  top: 0;
-  right: 1.25rem;
-  transform: translateY(-50%);
-  padding: 0.3rem 0.7rem;
-  background-color: var(--accent-color, #3b82f6);
-  color: white;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
+.eyebrow {
+  margin-bottom: 1rem;
 
-.plan-header h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.plan-description {
-  min-height: 42px;
-  margin: 0;
   color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
+
+  font-family: monospace;
+
+  font-size: 0.8rem;
+
+  letter-spacing: 1.5px;
 }
 
-.price {
-  display: flex;
-  align-items: baseline;
-  margin-top: 1.75rem;
-}
+.title {
+  margin: 0 0 1.5rem;
 
-.price-amount {
-  font-size: 2.5rem;
+  color: var(--text-main);
+
+  font-size: 3.5rem;
+
   font-weight: 700;
+
+  line-height: 1.1;
+
   letter-spacing: -1px;
 }
 
-.price-period {
-  margin-left: 0.35rem;
+.subtitle {
+  max-width: 650px;
+
+  margin: 0;
+
   color: var(--text-muted);
-  font-size: 0.85rem;
+
+  font-size: 1.1rem;
+
+  line-height: 1.6;
 }
 
-.plan-divider {
+
+/* =========================================================
+   PRICING GRID
+   ========================================================= */
+
+.pricing-grid {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 1rem;
+
+  align-items: stretch;
+}
+
+
+/* =========================================================
+   PRICING CARD
+   ========================================================= */
+
+.pricing-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  min-height: 530px;
+
+  padding: 1.5rem;
+
+  background-color: var(--bg-main);
+
+  border: 1px solid var(--border-color);
+
+  border-radius: 2px;
+
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pricing-card:hover {
+  border-color: var(--text-muted);
+
+  transform: translateY(-3px);
+}
+
+.pricing-card.featured {
+  border-color: var(--text-main);
+}
+
+.pricing-card.featured:hover {
+  border-color: var(--text-main);
+}
+
+
+/* =========================================================
+   RECOMMENDED LABEL
+   ========================================================= */
+
+.popular-label {
+  position: absolute;
+
+  top: -1px;
+  right: -1px;
+
+  padding: 0.45rem 0.7rem;
+
+  background-color: var(--text-main);
+
+  color: var(--bg-main);
+
+  font-family: monospace;
+
+  font-size: 0.65rem;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.card-top {
+  min-height: 130px;
+}
+
+.tier-label {
+  margin-bottom: 0.75rem;
+
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.7rem;
+
+  letter-spacing: 1px;
+}
+
+.tier-name {
+  margin: 0 0 0.5rem;
+
+  color: var(--text-main);
+
+  font-size: 1.5rem;
+
+  font-weight: 600;
+
+  letter-spacing: -0.3px;
+}
+
+.tier-description {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   PRICE
+   ========================================================= */
+
+.price {
+  display: flex;
+
+  align-items: baseline;
+
+  gap: 0.4rem;
+
+  min-height: 75px;
+}
+
+.price-amount {
+  color: var(--text-main);
+
+  font-size: 2.5rem;
+
+  font-weight: 700;
+
+  letter-spacing: -1px;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.price-period {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.7rem;
+
+  letter-spacing: 0.5px;
+}
+
+.coming-soon-price {
+  display: flex;
+
+  align-items: center;
+
+  min-height: 75px;
+
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 1.15rem;
+
+  font-weight: 600;
+
+  letter-spacing: 1px;
+}
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.card-divider {
+  width: 100%;
+
   height: 1px;
-  margin: 1.75rem 0;
+
+  margin: 0.5rem 0 1.25rem;
+
   background-color: var(--border-color);
 }
 
+
+/* =========================================================
+   FEATURES
+   ========================================================= */
+
 .feature-list {
   display: flex;
+
   flex-direction: column;
-  gap: 0.9rem;
+
+  gap: 0.85rem;
+
+  flex: 1;
+
   padding: 0;
   margin: 0;
+
   list-style: none;
 }
 
 .feature-list li {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  color: var(--text-main);
-  font-size: 0.9rem;
-}
 
-.feature-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
+  align-items: flex-start;
+
+  gap: 0.6rem;
+
   color: var(--text-muted);
-  font-size: 0.85rem;
+
+  font-size: 0.82rem;
+
+  line-height: 1.4;
 }
 
-.feature-icon.included {
-  color: #10b981;
-  font-weight: 700;
+.feature-marker {
+  flex-shrink: 0;
+
+  color: var(--text-main);
+
+  font-family: monospace;
+
+  font-size: 0.8rem;
 }
 
-.feature-disabled {
-  color: var(--text-muted) !important;
-  opacity: 0.55;
-}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
 .plan-button {
   width: 100%;
-  margin-top: auto;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  font-size: 0.9rem;
+
+  min-height: 46px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 0.5rem;
+
+  margin-top: 2rem;
+
+  font-family: monospace;
+
+  font-size: 0.8rem;
+
   font-weight: 600;
+
+  letter-spacing: 1px;
+
+  text-decoration: none;
+
+  border-radius: 2px;
+
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+
+  transition: all 0.2s ease;
 }
 
-.plan-button:hover {
-  border-color: var(--text-muted);
-  background-color: var(--bg-sidebar);
+
+/* Primary */
+
+.plan-button.primary {
+  background-color: var(--text-main);
+
+  color: var(--bg-main);
+
+  border: 1px solid var(--text-main);
 }
 
-.plan-button-primary {
-  border-color: var(--accent-color, #3b82f6);
-  background-color: var(--accent-color, #3b82f6);
+.plan-button.primary:hover {
+  background-color: var(--accent-color);
+
+  border-color: var(--accent-color);
+
   color: white;
 }
 
-.plan-button-primary:hover {
-  border-color: var(--accent-color, #3b82f6);
-  background-color: var(--accent-color, #2563eb);
-}
 
-.pricing-footer {
-  margin-top: 3rem;
-  padding: 1.75rem;
-  background-color: var(--bg-card);
+/* Secondary */
+
+.plan-button.secondary {
+  background-color: transparent;
+
+  color: var(--text-main);
+
   border: 1px solid var(--border-color);
-  border-radius: 8px;
 }
 
-.pricing-footer h3 {
-  margin: 0 0 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 600;
+.plan-button.secondary:hover {
+  background-color: var(--text-main);
+
+  color: var(--bg-main);
+
+  border-color: var(--text-main);
 }
 
-.included-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+
+/* Disabled */
+
+.pricing-card.coming-soon {
+  opacity: 0.5;
+
+  cursor: not-allowed;
 }
 
-.included-item {
-  display: flex;
-  gap: 0.75rem;
+.pricing-card.coming-soon:hover {
+  border-color: var(--border-color);
+
+  transform: none;
 }
 
-.included-icon {
-  color: #10b981;
-  font-weight: 700;
-}
+.plan-button.disabled {
+  background-color: transparent;
 
-.included-item strong {
-  display: block;
-  margin-bottom: 0.2rem;
-  font-size: 0.85rem;
-}
-
-.included-item p {
-  margin: 0;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.5;
+
+  border: 1px solid var(--border-color);
+
+  cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
+.plan-button.disabled:hover {
+  background-color: transparent;
+
+  color: var(--text-muted);
+
+  border-color: var(--border-color);
+}
+
+
+/* =========================================================
+   BOTTOM NOTE
+   ========================================================= */
+
+.pricing-note {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: 1fr auto;
+
+  gap: 2rem;
+
+  align-items: center;
+
+  margin-top: 3rem;
+
+  padding-top: 1.5rem;
+
+  border-top: 1px solid var(--border-color);
+}
+
+.pricing-note p {
+  max-width: 700px;
+
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.72rem;
+
+  line-height: 1.6;
+}
+
+.faq-link {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.75rem;
+
+  letter-spacing: 1px;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
+}
+
+.faq-link:hover {
+  color: var(--text-main);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 1100px) {
+  .pricing-page {
+    padding-top: 3.5rem;
+
+    padding-bottom: 5rem;
+  }
+}
+
+
+@media (max-width: 700px) {
+  .pricing-page {
+    padding-top: 3rem;
+
+    padding-bottom: 4rem;
+  }
+
+  .pricing-header {
+    margin-bottom: 3rem;
+  }
+
+  .title {
+    font-size: 2.8rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
   .pricing-grid {
     grid-template-columns: 1fr;
+
+    gap: 1rem;
   }
 
   .pricing-card {
     min-height: auto;
   }
 
-  .included-grid {
+  .card-top {
+    min-height: auto;
+  }
+
+  .pricing-note {
     grid-template-columns: 1fr;
-  }
-}
 
-@media (max-width: 600px) {
-  .pricing-page {
-    padding: 1.5rem;
-  }
+    gap: 1rem;
 
-  .pricing-header {
-    margin-bottom: 2rem;
-  }
-
-  .pricing-header h1 {
-    font-size: 1.8rem;
+    margin-top: 2.5rem;
   }
 }
 </style>

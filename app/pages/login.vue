@@ -1,8 +1,12 @@
 <script setup lang="ts">
-const { fetch: refreshSession } = useUserSession()
+const { user, fetch: refreshSession } = useUserSession()
 
 useHead({
   title: 'Login',
+})
+
+definePageMeta({
+  middleware: ['logged']
 })
 
 const credentials = reactive({
@@ -24,13 +28,19 @@ async function login() {
   loading.value = true
 
   try {
-    await $fetch('/api/login', {
+    const response = await $fetch('/api/auth/login', {
       method: 'POST',
       body: credentials,
     })
 
     await refreshSession()
-    await navigateTo('/dashboard')
+    if(response.user.role == 'admin'){
+      await navigateTo('/admin')
+    }
+    else{
+      await navigateTo('/dashboard')
+    }
+    
   } catch (err: any) {
     error.value =
       err?.data?.message ||

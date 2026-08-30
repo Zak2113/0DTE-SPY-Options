@@ -19,8 +19,9 @@
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
       </svg>
     </button>
-
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </div>
 </template>
 
@@ -68,11 +69,22 @@ html,
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   transition: background-color 0.3s, color 0.3s;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 a {
@@ -82,6 +94,7 @@ a {
 .app-root {
   min-height: 100vh;
   position: relative;
+  background-color: var(--bg-main);
 }
 
 .theme-toggle {
