@@ -16,6 +16,7 @@ services:
       - SERVER_DATA_DIR=/app/market_data
       - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD:?}
       - DATABASE_URL=${DATABASE_URL:?}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:?}
     volumes:
       # BIND MOUNT: Maps the raw host path straight into the container
       - /var/lib/docker/volumes/a40wc8k0oog8c8kowk0wgsgo_bot-data/_data/spy_options:/app/market_data
