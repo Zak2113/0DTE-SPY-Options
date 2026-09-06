@@ -15,6 +15,7 @@
     "drizzle-orm": "^0.45.2",
     "nuxt": "^4.4.5",
     "nuxt-auth-utils": "^0.5.30",
+    "pg": "^8.23.0",
     "plotly.js-dist-min": "^3.5.1",
     "postgres": "^3.4.9",
     "stripe": "^22.6.0",
@@ -23,6 +24,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.10"
   },
   "allowScripts": {

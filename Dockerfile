@@ -35,6 +35,9 @@ ENV PORT=3000
 # Copy ONLY the built output from the builder stage
 COPY --from=builder /app/.output ./.output
 
+# Migration files aren't part of the Nuxt build output — copy separately
+COPY --from=builder /app/server/database ./server/database
+
 # Expose the port your app runs on
 EXPOSE 3000
 
