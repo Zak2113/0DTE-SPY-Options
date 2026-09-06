@@ -109,6 +109,10 @@ import VerticalStrikeRuler from '~/components/VerticalStrikeRuler.vue'; // <-- U
 const { getContractData } = useDuckDb();
 const config = useRuntimeConfig();
 
+definePageMeta({
+  layout: false
+})
+
 const isLoading = ref(false);
 const chartData = ref([]);
 const metadata = ref({});
