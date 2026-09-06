@@ -34,12 +34,12 @@ const toggleTheme = () => {
 
 useHead({
   // The default title if a page doesn't set one at all
-  title: 'My Awesome SaaS',
+  title: '0DTE SPY Hub',
   
   // A template that automatically formats page-specific titles
   // %s is replaced by the page's specific title
   titleTemplate: (titleChunk) => {
-    return titleChunk ? `${titleChunk} - My Awesome SaaS` : 'My Awesome SaaS';
+    return titleChunk ? `${titleChunk} - 0DTE SPY Hub` : '0DTE SPY Hub';
   }
 })
 
