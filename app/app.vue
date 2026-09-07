@@ -1,48 +1,20 @@
 <template>
-  <div class="app-root">
-    <button @click="toggleTheme" class="theme-toggle" aria-label="Toggle dark mode">
-      <svg v-if="$colorMode.value !== 'dark'" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor"
-        stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="5"></circle>
-        <line x1="12" y1="1" x2="12" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-      </svg>
-
-      <svg v-else viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-      </svg>
-    </button>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup>
-const colorMode = useColorMode();
-
-const toggleTheme = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
-};
-
 useHead({
   // The default title if a page doesn't set one at all
   title: '0DTE SPY Hub',
-  
+
   // A template that automatically formats page-specific titles
   // %s is replaced by the page's specific title
   titleTemplate: (titleChunk) => {
-    return titleChunk ? `${titleChunk} - 0DTE SPY Hub` : '0DTE SPY Hub';
-  }
+    return titleChunk ? `${titleChunk} - 0DTE SPY Hub` : '0DTE SPY Hub'
+  },
 })
-
 </script>
 
 <style>
@@ -101,30 +73,5 @@ body::-webkit-scrollbar {
 
 a {
   text-decoration: none;
-}
-
-.app-root {
-  min-height: 100vh;
-  position: relative;
-  background-color: var(--bg-main);
-}
-
-.theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 2rem;
-  z-index: 1000;
-  background: var(--bg-card);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.theme-toggle:hover {
-  border-color: var(--accent-color);
 }
 </style>

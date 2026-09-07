@@ -12,6 +12,6 @@ export default defineNitroPlugin(async () => {
 
     catch (error) {
         console.error('Error running migrations')
-        process.exit(1)
+        
     }
 });
