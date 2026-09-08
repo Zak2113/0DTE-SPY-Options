@@ -8,8 +8,54 @@ definePageMeta({
 
 const { user } = useUserSession()
 
-// Placeholder data — replace with real API calls once the backend job/results
-// endpoints exist (e.g. GET /api/backtests, GET /api/stats).
+// -----------------------------------------------------------------------
+// Placeholder data below — replace each block with a real API call once
+// the corresponding backend endpoint exists:
+//
+//   spyQuote      -> GET /api/market/spy-quote        (live/last SPY price)
+//   biggestMover   -> GET /api/market/todays-movers?limit=1
+//   topMovers      -> GET /api/market/todays-movers?limit=5
+//   stats          -> GET /api/stats
+//   recentBacktests -> GET /api/backtests?limit=5
+//
+// "Biggest mover" methodology (compute this once per day, server-side, right
+// after the day's 0DTE chain is ingested):
+//   For every contract that traded today, take (session high - session low)
+//   as the max theoretical profit if someone bought at the low and sold at
+//   the high (or the reverse for a short). Rank contracts by percent return
+//   ((high - low) / low), not raw dollar move, since a $50 move on a $2
+//   option and a $2 move on a $0.10 option aren't comparable in raw dollars.
+//   The #1 ranked contract is "today's biggest mover".
+// -----------------------------------------------------------------------
+
+const spyQuote = ref({
+  price: 668.42,
+  change: 3.15,
+  changePct: 0.47,
+  marketOpen: true,
+  closesIn: '2h 14m',
+  asOf: '11:46 AM ET',
+})
+
+const biggestMover = ref({
+  symbol: 'SPY 260828C00670000',
+  label: '$670 Call',
+  low: 0.12,
+  high: 2.84,
+  lowTime: '9:42 AM',
+  highTime: '2:58 PM',
+  pnlPct: 2166.7,
+  pnlPerContract: 272.0,
+})
+
+const topMovers = ref([
+  { symbol: 'SPY 260828C00670000', label: '$670 Call', pnlPct: 2166.7 },
+  { symbol: 'SPY 260828P00660000', label: '$660 Put', pnlPct: 1840.0 },
+  { symbol: 'SPY 260828C00672000', label: '$672 Call', pnlPct: 1390.5 },
+  { symbol: 'SPY 260828P00658000', label: '$658 Put', pnlPct: 980.2 },
+  { symbol: 'SPY 260828C00668000', label: '$668 Call', pnlPct: 812.9 },
+])
+
 const stats = [
   { label: 'BACKTESTS RUN', value: '128' },
   { label: 'AVG WIN RATE', value: '61.4%' },
@@ -52,6 +98,11 @@ function formatPnl(value: number) {
   const sign = value > 0 ? '+' : ''
   return `${sign}$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
+
+function formatPct(value: number, withSign = true) {
+  const sign = withSign && value > 0 ? '+' : ''
+  return `${sign}${value.toFixed(1)}%`
+}
 </script>
 
 <template>
@@ -70,6 +121,89 @@ function formatPnl(value: number) {
       <NuxtLink to="/dashboard/backtests/new" class="primary-button">
         New backtest
       </NuxtLink>
+    </div>
+
+    <!-- Headline: SPY price + today's biggest mover -->
+    <div class="hero-grid">
+      <div class="hero-card">
+        <div class="hero-card-header">
+          <span class="hero-eyebrow">SPY</span>
+          <span :class="['market-badge', spyQuote.marketOpen ? 'market-open' : 'market-closed']">
+            {{ spyQuote.marketOpen ? 'OPEN' : 'CLOSED' }}
+          </span>
+        </div>
+
+        <div class="hero-price-row">
+          <span class="hero-price">${{ spyQuote.price.toFixed(2) }}</span>
+          <span :class="['hero-change', spyQuote.change >= 0 ? 'positive' : 'negative']">
+            {{ spyQuote.change >= 0 ? '+' : '' }}{{ spyQuote.change.toFixed(2) }}
+            ({{ formatPct(spyQuote.changePct) }})
+          </span>
+        </div>
+
+        <div class="hero-footer">
+          <span v-if="spyQuote.marketOpen">Closes in {{ spyQuote.closesIn }}</span>
+          <span v-else>Market closed</span>
+          <span class="hero-footer-dot">·</span>
+          <span>As of {{ spyQuote.asOf }}</span>
+        </div>
+      </div>
+
+      <div class="hero-card hero-card--accent">
+        <div class="hero-card-header">
+          <span class="hero-eyebrow">TODAY'S BIGGEST 0DTE MOVER</span>
+        </div>
+
+        <div class="mover-main-row">
+          <span class="mover-label">{{ biggestMover.label }}</span>
+          <span class="mover-pnl-pct">{{ formatPct(biggestMover.pnlPct) }}</span>
+        </div>
+
+        <div class="mover-detail-row">
+          <div class="mover-detail">
+            <span class="mover-detail-label">LOW</span>
+            <span class="mover-detail-value">${{ biggestMover.low.toFixed(2) }} <span class="cell-muted">{{ biggestMover.lowTime }}</span></span>
+          </div>
+          <span class="mover-arrow">→</span>
+          <div class="mover-detail">
+            <span class="mover-detail-label">HIGH</span>
+            <span class="mover-detail-value">${{ biggestMover.high.toFixed(2) }} <span class="cell-muted">{{ biggestMover.highTime }}</span></span>
+          </div>
+          <div class="mover-detail mover-detail--pnl">
+            <span class="mover-detail-label">PER CONTRACT</span>
+            <span class="mover-detail-value positive">{{ formatPnl(biggestMover.pnlPerContract) }}</span>
+          </div>
+        </div>
+
+        <div class="hero-footer">
+          <NuxtLink :to="`/dashboard/backtests/new?symbol=${biggestMover.symbol}`" class="mover-link">
+            Backtest this setup →
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top movers -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Today's top movers</span>
+        <NuxtLink to="/dashboard/movers" class="section-link">
+          View all →
+        </NuxtLink>
+      </div>
+
+      <div class="movers-list">
+        <div
+          v-for="(mover, i) in topMovers"
+          :key="mover.symbol"
+          class="movers-row"
+        >
+          <span class="movers-rank">{{ i + 1 }}</span>
+          <span class="cell-strong">{{ mover.label }}</span>
+          <span class="cell-muted movers-symbol">{{ mover.symbol }}</span>
+          <span class="movers-pnl positive">{{ formatPct(mover.pnlPct) }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Stat cards -->
@@ -161,7 +295,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.6rem;
+  font-size: 0.68rem;
 
   letter-spacing: 1px;
 }
@@ -171,7 +305,7 @@ function formatPnl(value: number) {
 
   color: var(--text-main);
 
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
 
   letter-spacing: 0.2px;
@@ -188,7 +322,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
 
   letter-spacing: 0.6px;
@@ -200,6 +334,261 @@ function formatPnl(value: number) {
 
 .primary-button:hover {
   background-color: var(--accent-color);
+}
+
+
+/* =========================================================
+   HERO CARDS (SPY price + biggest mover)
+   ========================================================= */
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+
+  gap: 1px;
+
+  background-color: var(--border-color);
+
+  border: 1px solid var(--border-color);
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.9rem;
+
+  padding: 1.5rem 1.75rem;
+
+  background-color: var(--bg-card);
+}
+
+.hero-card--accent {
+  border-left: 2px solid var(--accent-color);
+}
+
+.hero-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-eyebrow {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.68rem;
+
+  letter-spacing: 1px;
+}
+
+.market-badge {
+  padding: 0.15rem 0.5rem;
+
+  font-family: monospace;
+
+  font-size: 0.62rem;
+
+  letter-spacing: 0.6px;
+}
+
+.market-open {
+  color: #3a9a5c;
+
+  border: 1px solid #3a9a5c;
+}
+
+.market-closed {
+  color: var(--text-muted);
+
+  border: 1px solid var(--border-color);
+}
+
+.hero-price-row {
+  display: flex;
+  align-items: baseline;
+
+  gap: 0.75rem;
+}
+
+.hero-price {
+  color: var(--text-main);
+
+  font-family: monospace;
+
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.hero-change {
+  font-family: monospace;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.hero-change.positive {
+  color: #3a9a5c;
+}
+
+.hero-change.negative {
+  color: #c0473f;
+}
+
+.hero-footer {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.72rem;
+}
+
+.hero-footer-dot {
+  margin: 0 0.4rem;
+}
+
+
+/* =========================================================
+   BIGGEST MOVER CARD
+   ========================================================= */
+
+.mover-main-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mover-label {
+  color: var(--text-main);
+
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.mover-pnl-pct {
+  color: var(--accent-color);
+
+  font-family: monospace;
+
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.mover-detail-row {
+  display: flex;
+  align-items: center;
+
+  gap: 1rem;
+}
+
+.mover-detail {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.25rem;
+}
+
+.mover-detail--pnl {
+  margin-left: auto;
+
+  align-items: flex-end;
+}
+
+.mover-detail-label {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.6rem;
+
+  letter-spacing: 1px;
+}
+
+.mover-detail-value {
+  color: var(--text-main);
+
+  font-family: monospace;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.mover-detail-value.positive {
+  color: #3a9a5c;
+}
+
+.mover-arrow {
+  color: var(--text-muted);
+
+  font-size: 1rem;
+}
+
+.mover-link {
+  color: var(--accent-color);
+
+  font-family: monospace;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.3px;
+
+  text-decoration: none;
+}
+
+.mover-link:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   TOP MOVERS LIST
+   ========================================================= */
+
+.movers-list {
+  border: 1px solid var(--border-color);
+}
+
+.movers-row {
+  display: grid;
+  grid-template-columns: 2rem 1.2fr 1.6fr 1fr;
+  align-items: center;
+
+  gap: 1rem;
+
+  padding: 0.7rem 1.25rem;
+
+  font-size: 0.85rem;
+
+  border-bottom: 1px solid var(--border-color);
+}
+
+.movers-row:last-child {
+  border-bottom: none;
+}
+
+.movers-rank {
+  color: var(--text-muted);
+
+  font-family: monospace;
+
+  font-size: 0.78rem;
+}
+
+.movers-symbol {
+  font-size: 0.72rem;
+}
+
+.movers-pnl {
+  font-family: monospace;
+  font-weight: 700;
+
+  text-align: right;
+}
+
+.movers-pnl.positive {
+  color: #3a9a5c;
 }
 
 
@@ -231,7 +620,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.55rem;
+  font-size: 0.62rem;
 
   letter-spacing: 1px;
 }
@@ -241,7 +630,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
@@ -266,7 +655,7 @@ function formatPnl(value: number) {
 .section-title {
   color: var(--text-main);
 
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
@@ -275,7 +664,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.6rem;
+  font-size: 0.68rem;
 
   letter-spacing: 0.4px;
 
@@ -308,7 +697,7 @@ function formatPnl(value: number) {
 
   color: var(--text-main);
 
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 
   text-decoration: none;
 
@@ -330,7 +719,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.55rem;
+  font-size: 0.62rem;
 
   letter-spacing: 1px;
 }
@@ -344,7 +733,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .cell-pnl {
@@ -367,7 +756,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.55rem;
+  font-size: 0.6rem;
 
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -401,7 +790,7 @@ function formatPnl(value: number) {
 
   color: var(--text-muted);
 
-  font-size: 0.8rem;
+  font-size: 0.88rem;
 
   border: 1px solid var(--border-color);
 }
@@ -411,7 +800,7 @@ function formatPnl(value: number) {
 
   font-family: monospace;
 
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
 
   letter-spacing: 0.4px;
@@ -429,6 +818,10 @@ function formatPnl(value: number) {
    ========================================================= */
 
 @media (max-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -439,6 +832,14 @@ function formatPnl(value: number) {
 
   .table-row span:nth-child(5),
   .table-row span:nth-child(6) {
+    display: none;
+  }
+
+  .movers-row {
+    grid-template-columns: 2rem 1fr 1fr;
+  }
+
+  .movers-symbol {
     display: none;
   }
 }
@@ -460,6 +861,16 @@ function formatPnl(value: number) {
   .table-row span:nth-child(3),
   .table-row span:nth-child(4) {
     display: none;
+  }
+
+  .mover-detail-row {
+    flex-wrap: wrap;
+  }
+
+  .mover-detail--pnl {
+    margin-left: 0;
+
+    align-items: flex-start;
   }
 }
 </style>
